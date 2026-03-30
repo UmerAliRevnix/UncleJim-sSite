@@ -309,6 +309,15 @@ if( function_exists('acf_add_local_field_group') ):
                 'instructions' => 'Select the products (including THIS ONE) that should appear side-by-side as thumbnail links.',
             ),
             array(
+                'key' => 'field_pack_label_image',
+                'label' => 'Pack Label Side Image',
+                'name' => 'pack_label_image',
+                'type' => 'image',
+                'return_format' => 'url',
+                'preview_size' => 'medium',
+                'instructions' => 'Optional image shown to the right of the Pack Size label.',
+            ),
+            array(
                 'key' => 'field_pack_options_repeater',
                 'label' => 'Pack Options',
                 'name' => 'pack_sizes',
