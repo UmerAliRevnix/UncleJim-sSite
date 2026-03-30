@@ -1,0 +1,317 @@
+/* Custom Single Product Template Styles */
+.custom-product {
+    display: flex;
+    flex-wrap: nowrap;
+    /* Forces them to stay in a row on desktop */
+    justify-content: center;
+    align-items: flex-start;
+    gap: 64px;
+    margin: 40px auto;
+    max-width: 1250px;
+    /* Gives a tiny bit of breathing room for the 1224px total */
+    font-family: 'Inter', sans-serif;
+    box-sizing: border-box;
+}
+
+.custom-product * {
+    box-sizing: border-box;
+}
+
+.custom-product__gallery {
+    width: 600px;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.custom-product__details {
+    width: 560px;
+    flex-shrink: 0;
+    /* Optional: Remove background/padding if Figma doesn't actually have a shaded box here */
+    background: transparent;
+    padding: 0;
+}
+
+.custom-product__main-badge {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: #fff;
+    padding: 6px 14px;
+    z-index: 10;
+    font-weight: bold;
+    border-radius: 4px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    font-size: 14px;
+}
+
+.custom-product__subtitle {
+    font-size: 14px;
+    color: #555;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+    text-decoration: underline;
+}
+
+.custom-product__title {
+    font-size: 32px;
+    font-weight: 800;
+    margin-top: 0;
+    margin-bottom: 15px;
+    line-height: 1.2;
+}
+
+/* Star overrides */
+.woocommerce-product-rating {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.woocommerce-review-link {
+    display: none;
+}
+
+.custom-product__price-block {
+    margin-bottom: 20px;
+}
+
+.custom-product__price-block .price {
+    font-size: 28px;
+    font-weight: 800;
+    color: #111;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.custom-product__price-block del {
+    color: #999;
+    font-size: 20px;
+    font-weight: normal;
+}
+
+.custom-product__price-block ins {
+    text-decoration: none;
+}
+
+/* Custom Variations Wrappers injected via functions.php */
+.variations select {
+    display: none !important;
+}
+
+.variations .label label {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* Complex Radio Cards */
+.custom-pack-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    padding: 18px 20px;
+    margin-bottom: 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.custom-pack-card--selected {
+    border-color: #2e7d32;
+    box-shadow: 0 4px 15px rgba(46, 125, 50, 0.1);
+    z-index: 2;
+}
+
+.custom-pack-card__left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.custom-pack-card__radio {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+    display: inline-block;
+    background: #fafafa;
+}
+
+.custom-pack-card--selected .custom-pack-card__radio {
+    border-color: #2e7d32;
+    background: #2e7d32 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>') center/14px no-repeat;
+}
+
+.custom-pack-card__title {
+    font-weight: bold;
+    font-size: 18px;
+    margin: 0 0 4px 0;
+    color: #111;
+}
+
+.custom-pack-card__subtitle {
+    font-size: 13px;
+    color: #666;
+    margin: 0;
+}
+
+.custom-pack-card__badges {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+}
+
+.custom-pack-card__badge {
+    background: #356e49;
+    color: white;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.custom-pack-card__discount {
+    background: #e65100;
+    color: white;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.custom-pack-card__right {
+    text-align: right;
+}
+
+.custom-pack-card__price {
+    font-size: 20px;
+    font-weight: 800;
+    margin: 0 0 4px 0;
+    color: #111;
+}
+
+.custom-pack-card__reg-price {
+    font-size: 14px;
+    color: #999;
+    text-decoration: line-through;
+    margin: 0;
+}
+
+/* Add to cart overrides */
+.single_add_to_cart_button {
+    background: #356e49 !important;
+    color: #fff !important;
+    width: 100%;
+    border-radius: 30px !important;
+    padding: 18px !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
+    text-transform: uppercase;
+    border: none;
+    transition: 0.3s;
+    margin-top: 15px;
+}
+
+.single_add_to_cart_button:hover {
+    background: #275236 !important;
+    transform: translateY(-2px);
+}
+
+.quantity {
+    display: none !important;
+}
+
+@media (max-width: 992px) {
+    .custom-product {
+        flex-wrap: wrap;
+        width: 100%;
+        padding: 0 15px;
+        /* Safely pad on tablets */
+    }
+
+    .custom-product__gallery,
+    .custom-product__details {
+        width: 100%;
+        flex-shrink: 1;
+        /* allow shrinking if needed */
+    }
+
+    .custom-pack-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .custom-pack-card__right {
+        text-align: left;
+        margin-left: 37px;
+    }
+
+    .custom-pack-card__badges {
+        left: unset;
+        right: 10px;
+        transform: none;
+    }
+}
+
+.custom-product__gallery .woocommerce-product-gallery__image:first-child img {
+    border-radius: 12px;
+    width: 100%;
+    height: 600px;
+    object-fit: contain;
+}
+
+.custom-product__gallery .flex-control-nav.flex-control-thumbs {
+    display: flex !important;
+    gap: 10px !important;
+    margin-top: 15px !important;
+    padding: 0 !important;
+    list-style: none !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+/* Hide scrollbar for Chrome/Safari */
+.custom-product__gallery .flex-control-nav.flex-control-thumbs::-webkit-scrollbar {
+    display: none;
+}
+
+.custom-product__gallery .flex-control-nav.flex-control-thumbs li {
+    width: 70px !important;
+    flex: 0 0 70px !important;
+    float: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.custom-product__gallery .flex-control-nav.flex-control-thumbs li img {
+    border-radius: 6px !important;
+    border: 2px solid transparent !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100% !important;
+    height: auto !important;
+    box-sizing: border-box;
+    opacity: 0.7;
+}
+
+.custom-product__gallery .flex-control-nav.flex-control-thumbs li img:hover {
+    opacity: 1;
+}
+
+.custom-product__gallery .flex-control-nav.flex-control-thumbs li img.flex-active {
+    border-color: #ea580c !important;
+    opacity: 1 !important;
+}

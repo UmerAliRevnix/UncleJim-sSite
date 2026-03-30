@@ -207,3 +207,207 @@ require_once ASTRA_THEME_DIR . 'inc/abilities/bootstrap.php';
 require_once ASTRA_THEME_DIR . 'inc/core/deprecated/deprecated-filters.php';
 require_once ASTRA_THEME_DIR . 'inc/core/deprecated/deprecated-hooks.php';
 require_once ASTRA_THEME_DIR . 'inc/core/deprecated/deprecated-functions.php';
+
+add_action('woocommerce_product_options_general_product_data', function() {
+
+    woocommerce_wp_checkbox([
+        'id' => '_use_custom_template',
+        'label' => 'Use Custom Product Template',
+        'description' => 'Enable custom Figma-based product layout for this product'
+    ]);
+
+});
+
+add_action('woocommerce_process_product_meta', function($post_id) {
+
+    $value = !empty($_POST['_use_custom_template']) ? 'yes' : 'no';
+    update_post_meta($post_id, '_use_custom_template', $value);
+
+});
+
+add_filter('woocommerce_locate_template', function($template, $template_name, $template_path) {
+
+    if (!is_product()) {
+        return $template;
+    }
+
+    global $post;
+
+    if (!$post) return $template;
+
+    $use_custom = get_post_meta($post->ID, '_use_custom_template', true);
+
+    if ($use_custom === 'yes' && $template_name === 'single-product.php') {
+
+        $custom = get_stylesheet_directory() . '/woocommerce/single-product-custom.php';
+
+        if (file_exists($custom)) {
+            return $custom;
+        }
+    }
+
+    return $template;
+
+}, 10, 3);
+
+add_action('wp', function() {
+    if (is_product()) {
+        error_log('Product page loaded');
+    }
+});
+
+function enqueue_custom_product_assets() {
+    if ( is_product() ) {
+        // Enqueue perfectly generated styles
+        wp_enqueue_style( 
+            'custom-product-css', 
+            get_stylesheet_directory_uri() . '/single-product-custom.css', 
+            array(), 
+            filemtime(get_stylesheet_directory() . '/single-product-custom.css') 
+        );
+        // Enqueue precisely extracted JS
+        wp_enqueue_script( 
+            'custom-product-js', 
+            get_stylesheet_directory_uri() . '/single-product-custom.js', 
+            array(), 
+            filemtime(get_stylesheet_directory() . '/single-product-custom.js'), 
+            true 
+        );
+    }
+}
+add_action( 'wp_enqueue_scripts', 'enqueue_custom_product_assets' );
+
+// -------------------------------------------------------------
+// ACF RADIO CARDS AUTO-GENERATOR
+// -------------------------------------------------------------
+if( function_exists('acf_add_local_field_group') ):
+    acf_add_local_field_group(array(
+        'key' => 'group_custom_pack_options',
+        'title' => 'Custom Pack Radio Options (Figma)',
+        'fields' => array(
+            array(
+                'key' => 'field_product_swatch_label_prefix',
+                'label' => 'Product Type Label Prefix',
+                'name' => 'swatch_prefix',
+                'type' => 'text',
+                'placeholder' => 'e.g. Composting Mix:',
+            ),
+            array(
+                'key' => 'field_product_swatch_name',
+                'label' => 'Product Type Name',
+                'name' => 'swatch_name',
+                'type' => 'text',
+                'placeholder' => 'e.g. Red Worms',
+            ),
+            array(
+                'key' => 'field_linked_worm_products',
+                'label' => 'Linked Products (Image Swatch)',
+                'name' => 'linked_worm_products',
+                'type' => 'relationship',
+                'post_type' => array('product'),
+                'return_format' => 'id',
+                'instructions' => 'Select the products (including THIS ONE) that should appear side-by-side as thumbnail links.',
+            ),
+            array(
+                'key' => 'field_pack_options_repeater',
+                'label' => 'Pack Options',
+                'name' => 'pack_sizes',
+                'type' => 'repeater',
+                'instructions' => 'Add the options for the radio cards here.',
+                'button_label' => 'Add Option Card',
+                'sub_fields' => array(
+                    array(
+                        'key' => 'field_pack_title',
+                        'label' => 'Title',
+                        'name' => 'title',
+                        'type' => 'text',
+                        'placeholder' => 'e.g. 500 Worms',
+                    ),
+                    array(
+                        'key' => 'field_pack_subtitle',
+                        'label' => 'Subtitle',
+                        'name' => 'subtitle',
+                        'type' => 'text',
+                        'placeholder' => 'e.g. Great For Beginners',
+                    ),
+                    array(
+                        'key' => 'field_pack_badge',
+                        'label' => 'Green Badge',
+                        'name' => 'badge',
+                        'type' => 'text',
+                        'placeholder' => 'e.g. Bestseller',
+                    ),
+                    array(
+                        'key' => 'field_pack_price',
+                        'label' => 'Current Price (Number only)',
+                        'name' => 'price',
+                        'type' => 'text',
+                        'placeholder' => '39.95',
+                    ),
+                    array(
+                        'key' => 'field_pack_old_price',
+                        'label' => 'Old/Regular Price',
+                        'name' => 'old_price',
+                        'type' => 'text',
+                        'placeholder' => '59.95',
+                    ),
+                ),
+            ),
+        ),
+        'location' => array(
+            array(
+                array(
+                    'param' => 'post_type',
+                    'operator' => '==',
+                    'value' => 'product',
+                ),
+            ),
+        ),
+        'position' => 'acf_after_title',
+    ));
+endif;
+    
+// -------------------------------------------------------------
+// DYNAMIC CART PRICE OVERRIDE
+// -------------------------------------------------------------
+
+// 1. Store custom selected option data in Cart Item
+add_filter( 'woocommerce_add_cart_item_data', 'add_custom_pack_size_data', 10, 3 );
+function add_custom_pack_size_data( $cart_item_data, $product_id, $variation_id ) {
+    if ( isset( $_POST['custom_pack_size_index'] ) && $_POST['custom_pack_size_index'] !== '' ) {
+        $index = intval( $_POST['custom_pack_size_index'] );
+        $repeater = get_field('pack_sizes', $product_id);
+        
+        if($repeater && isset($repeater[$index])) {
+             $price = floatval($repeater[$index]['price']);
+             $title = $repeater[$index]['title'];
+             $cart_item_data['custom_pack_price'] = $price;
+             $cart_item_data['custom_pack_title'] = $title;
+        }
+    }
+    return $cart_item_data;
+}
+    
+// 2. Display custom option title in cart details row
+add_filter( 'woocommerce_get_item_data', 'display_custom_pack_size_in_cart', 10, 2 );
+function display_custom_pack_size_in_cart( $item_data, $cart_item ) {
+    if ( isset( $cart_item['custom_pack_title'] ) ) {
+        $item_data[] = array(
+            'key'     => 'Pack Size',
+            'value'   => wc_clean( $cart_item['custom_pack_title'] ),
+            'display' => '',
+        );
+    }
+    return $item_data;
+}
+    
+// 3. Change the actual item price to match the newly selected Radio Card price
+add_action( 'woocommerce_before_calculate_totals', 'calculate_custom_pack_price', 10, 1 );
+function calculate_custom_pack_price( $cart ) {
+    if ( is_admin() && ! defined( 'DOING_AJAX' ) ) return;
+    foreach ( $cart->get_cart() as $cart_item_key => $cart_item ) {
+        if ( isset( $cart_item['custom_pack_price'] ) ) {
+            $cart_item['data']->set_price( $cart_item['custom_pack_price'] );
+        }
+    }
+}
