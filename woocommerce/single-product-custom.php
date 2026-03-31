@@ -23,15 +23,19 @@ $badge_text    = function_exists('get_field') ? get_field('image_badge_text') : 
 $wholesale     = function_exists('get_field') ? get_field('wholesale_link') : '';
 $feature_text  = function_exists('get_field') ? get_field('feature_item_text') : ''; 
 $custom_reviews= function_exists('get_field') ? get_field('custom_product_reviews') : ''; 
+$pack_label_image = function_exists('get_field') ? get_field('pack_label_image') : '';
 ?>
 
 <!-- Start WooCommerce specific opening wrapper -->
 <?php do_action( 'woocommerce_before_main_content' ); ?>
 
 <div class="custom-product">
-
+    
     <!-- LEFT COLUMN: Image & Gallery -->
     <div class="custom-product__gallery">
+          <div class="custom-product-gallery-header-breadcumb breadcrumbs">
+            <?php woocommerce_breadcrumb(); ?>
+        </div>
         <?php if($badge_text): ?>
             <div class="custom-product__main-badge"><?php echo esc_html($badge_text); ?></div>
         <?php endif; ?>
@@ -43,7 +47,7 @@ $custom_reviews= function_exists('get_field') ? get_field('custom_product_review
 
     <!-- RIGHT COLUMN: Details -->
     <div class="custom-product__details">
-        <div class="breadcrumbs" style="font-size: 12px; color: #666; margin-bottom: 15px;">
+        <div class="breadcrumbs">
             <?php woocommerce_breadcrumb(); ?>
         </div>
         
@@ -54,10 +58,13 @@ $custom_reviews= function_exists('get_field') ? get_field('custom_product_review
         <h1 class="custom-product__title"><?php the_title(); ?></h1>
         
         <?php if($custom_reviews): ?>
-            <div class="custom-product__rating" style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
-                <div style="display: flex; gap: 4px;">
+            <div class="custom-product__rating">
+                <div style="display: flex;">
                     <?php for($i=0; $i<5; $i++): ?>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="#f26522"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M7.19206 2.14046C7.49095 1.42183 8.50897 1.42183 8.80787 2.14046L10.1959 5.4776L13.7986 5.76643C14.5744 5.82863 14.889 6.79682 14.2979 7.30316L11.553 9.65445L12.3916 13.1701C12.5722 13.9272 11.7486 14.5256 11.0844 14.1199L7.99996 12.2359L4.91553 14.1199C4.25131 14.5255 3.42772 13.9272 3.60831 13.1701L4.44692 9.65445L1.70202 7.30316C1.11093 6.79682 1.42551 5.82863 2.20133 5.76643L5.80406 5.4776L7.19206 2.14046Z" fill="#EA580C"/>
+</svg>
+
                     <?php endfor; ?>
                 </div>
                 <?php 
@@ -66,7 +73,7 @@ $custom_reviews= function_exists('get_field') ? get_field('custom_product_review
                         $review_text .= ' reviews';
                     }
                 ?>
-                <span style="font-size: 16px; color: #111; font-weight: 500;"><?php echo esc_html($review_text); ?></span>
+                <span><?php echo esc_html($review_text); ?></span>
             </div>
         <?php endif; ?>
         
@@ -78,10 +85,10 @@ $custom_reviews= function_exists('get_field') ? get_field('custom_product_review
             if ( $product->is_on_sale() && $regular_price && $sale_price ) : 
                 $percentage = round( ( ( $regular_price - $sale_price ) / $regular_price ) * 100 );
             ?>
-                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 5px;">
-                    <span style="font-size: 28px; font-weight: 800; color: #1e4d30;">$<?php echo number_format($sale_price, 2); ?></span>
-                    <span style="font-size: 20px; font-weight: 500; color: #8a968f; text-decoration: line-through;">$<?php echo number_format($regular_price, 2); ?></span>
-                    <span style="background: #ea580c; color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 14px; font-weight: 700; letter-spacing: 0.5px;">-<?php echo esc_html($percentage); ?>% OFF</span>
+                <div>
+                    <span>$<?php echo number_format($sale_price, 2); ?></span>
+                    <span>$<?php echo number_format($regular_price, 2); ?></span>
+                    <span >-<?php echo esc_html($percentage); ?>% OFF</span>
                 </div>
             <?php else : ?>
                 <div style="display: flex; align-items: center; margin-bottom: 5px;">
@@ -103,24 +110,33 @@ $custom_reviews= function_exists('get_field') ? get_field('custom_product_review
                 $linked_prods = array($linked_prods_raw);
             }
         }
+
+        // Always include the current product as a visible swatch.
+        $swatch_product_ids = array( (int) $product->get_id() );
+        foreach ( $linked_prods as $linked_item ) {
+            $linked_id = is_object( $linked_item ) ? (int) $linked_item->ID : (int) $linked_item;
+            if ( $linked_id > 0 ) {
+                $swatch_product_ids[] = $linked_id;
+            }
+        }
+        $swatch_product_ids = array_values( array_unique( $swatch_product_ids ) );
         ?>
 
-        <?php if(!empty($linked_prods)): ?>
-        <div class="custom-product-swatches" style="margin-bottom: 12px;">
+        <?php if ( ! empty( $swatch_product_ids ) ) : ?>
+        <div class="custom-product-swatches">
             <?php if($swatch_prefix || $swatch_name): ?>
-                <div style="font-size: 16px; margin-bottom: 12px; color: #1e4d30;">
-                    <strong style="font-weight: 800;"><?php echo esc_html($swatch_prefix); ?></strong> 
-                    <span style="color: #444; font-weight: 500;"><?php echo esc_html($swatch_name); ?></span>
+                <div class="custom-product-swatch-heading">
+                    <strong class="custom-product-swatch-prefix"><?php echo esc_html($swatch_prefix); ?></strong> 
+                    <span class="custom-product-swatch-name"><?php echo esc_html($swatch_name); ?></span>
                 </div>
             <?php endif; ?>
-            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                <?php foreach($linked_prods as $linked_item): 
-                    $linked_id = is_object($linked_item) ? $linked_item->ID : intval($linked_item);
+            <div class="custom-product-swatch-container">
+                <?php foreach ( $swatch_product_ids as $linked_id ) :
                     $linked_url = get_permalink($linked_id);
                     $linked_img = get_the_post_thumbnail_url($linked_id, 'woocommerce_thumbnail') ?: get_the_post_thumbnail_url($linked_id, 'thumbnail') ?: get_the_post_thumbnail_url($linked_id, 'full'); 
                     $is_active = ((int)$linked_id === (int)$product->get_id());
                 ?>
-                    <a href="<?php echo esc_url($linked_url); ?>" style="display: block; width: 65px; height: 65px; border-radius: 8px; border: 2.5px solid <?php echo $is_active ? '#ea580c' : 'transparent'; ?>; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: 0.2s;">
+                    <a href="<?php echo esc_url($linked_url); ?>" class="custom-product-swatch<?php echo $is_active ? ' is-active' : ''; ?>" >
                         <?php if($linked_img): ?>
                             <img src="<?php echo esc_url($linked_img); ?>" alt="Product Swatch" style="width: 100%; height: 100%; object-fit: cover; opacity: <?php echo $is_active ? '1' : '0.8'; ?>;">
                         <?php else: ?>
@@ -138,11 +154,12 @@ $custom_reviews= function_exists('get_field') ? get_field('custom_product_review
                 
                 <?php if($pack_sizes): ?>
                     <?php $default_title = isset($pack_sizes[0]['title']) ? $pack_sizes[0]['title'] : ''; ?>
-                    <div style="position: relative; margin-bottom: 8px; width: 100%;">
-                        <div style="font-size: 16px; font-weight: 800; color: #1e4d30; padding-bottom: 4px;">
-                            Pack Size: <span id="dynamic-pack-label" style="font-weight: 500; color: #444; margin-left: 4px;"><?php echo esc_html($default_title); ?></span>
+                    <div >
+                        <div class="custom-pack-label" >
+                            Pack Size: <span id="dynamic-pack-label" ><?php echo esc_html($default_title); ?></span>
                         </div>
-                        <img src="http://unclejimbkp.local/wp-content/uploads/2026/03/product-type-poster-2.png" alt="Worms" style="position: absolute; right: 0; bottom: 5px; width: 64px; height: 64px; object-fit: contain; z-index: 10;" />
+                        <?php $pack_label_image_src = $pack_label_image ? $pack_label_image : 'http://unclejimbkp.local/wp-content/uploads/2026/03/product-type-poster-2.png'; ?>
+                        <img src="<?php echo esc_url($pack_label_image_src); ?>" alt="Worms" style="position: absolute; right: 0; bottom: 5px; width: 64px; height: 64px; object-fit: contain; z-index: 10;" />
                     </div>
                     <div class="custom-pack-cards-container">
                         <?php foreach($pack_sizes as $index => $pack): ?>
@@ -191,7 +208,7 @@ $custom_reviews= function_exists('get_field') ? get_field('custom_product_review
                 <?php endif; ?>
                 
                 <?php if($wholesale): ?>
-                    <a href="<?php echo esc_url($wholesale); ?>" class="custom-product__wholesale-link" style="display:inline-block; margin: 5px 0 15px 0; color:#356e49; font-weight:bold; text-decoration:underline;">
+                    <a href="<?php echo esc_url($wholesale); ?>" class="custom-product__wholesale-link" >
                         Contact us for wholesale orders
                     </a>
                 <?php endif; ?>
@@ -206,15 +223,18 @@ $custom_reviews= function_exists('get_field') ? get_field('custom_product_review
                 // Explode the textarea content by new lines
                 $lines = explode("\n", $feature_text); 
             ?>
-            <ul class="custom-product__features-list" style="list-style: none; padding: 0; margin-top:25px;">
+            <ul class="custom-product__features-list">
                 <?php foreach($lines as $line): ?>
                     <?php 
                         $line = trim($line); 
                         if(empty($line)) continue; 
                     ?>
-                    <li class="custom-product__feature-item" style="margin-bottom:14px; display:flex; gap:12px; align-items:flex-start; font-size:16px; font-weight:500; color:#111; letter-spacing:-0.2px;">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="#2d6a4f" style="flex-shrink:0; margin-top: -1px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                        <span style="line-height: 1.4;"><?php echo esc_html($line); ?></span>
+                    <li class="custom-product__feature-item">
+                       <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M0 8.125C0 3.63769 3.63769 0 8.125 0C12.6123 0 16.25 3.63769 16.25 8.125C16.25 12.6123 12.6123 16.25 8.125 16.25C3.63769 16.25 0 12.6123 0 8.125ZM11.1336 6.61327C11.3342 6.33239 11.2692 5.94205 10.9883 5.74142C10.7074 5.54079 10.317 5.60584 10.1164 5.88673L7.42025 9.66136L6.06694 8.30806C5.82286 8.06398 5.42714 8.06398 5.18306 8.30806C4.93898 8.55214 4.93898 8.94786 5.18306 9.19194L7.05806 11.0669C7.18797 11.1969 7.36846 11.263 7.55155 11.2479C7.73464 11.2327 7.9018 11.1378 8.00858 10.9883L11.1336 6.61327Z" fill="#2C6A4C"/>
+</svg>
+
+                        <span><?php echo esc_html($line); ?></span>
                     </li>
                 <?php endforeach; ?>
             </ul>
@@ -228,3 +248,5 @@ $custom_reviews= function_exists('get_field') ? get_field('custom_product_review
 <?php endwhile; // end of the loop. ?>
 
 <?php get_footer( 'shop' ); ?>
+
+
