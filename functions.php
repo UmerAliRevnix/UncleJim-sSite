@@ -216,12 +216,40 @@ add_action('woocommerce_product_options_general_product_data', function() {
         'description' => 'Enable custom Figma-based product layout for this product'
     ]);
 
+    echo '<div class="options_group">';
+    
+    woocommerce_wp_text_input([
+        'id' => '_wholesale_text',
+        'label' => 'Wholesale Link Text',
+        'description' => 'Enter the text for the wholesale link (e.g. Contact us for wholesale orders)',
+        'desc_tip' => true,
+        'placeholder' => 'Contact us for wholesale orders'
+    ]);
+
+    woocommerce_wp_text_input([
+        'id' => '_wholesale_link',
+        'label' => 'Wholesale Link URL',
+        'description' => 'Enter the URL for the wholesale link',
+        'desc_tip' => true,
+        'placeholder' => 'https://example.com/wholesale'
+    ]);
+
+    echo '</div>';
+
 });
 
 add_action('woocommerce_process_product_meta', function($post_id) {
 
-    $value = !empty($_POST['_use_custom_template']) ? 'yes' : 'no';
-    update_post_meta($post_id, '_use_custom_template', $value);
+    $use_custom = !empty($_POST['_use_custom_template']) ? 'yes' : 'no';
+    update_post_meta($post_id, '_use_custom_template', $use_custom);
+
+    if (isset($_POST['_wholesale_text'])) {
+        update_post_meta($post_id, '_wholesale_text', sanitize_text_field($_POST['_wholesale_text']));
+    }
+
+    if (isset($_POST['_wholesale_link'])) {
+        update_post_meta($post_id, '_wholesale_link', esc_url_raw($_POST['_wholesale_link']));
+    }
 
 });
 
@@ -277,9 +305,6 @@ function enqueue_custom_product_assets() {
 }
 add_action( 'wp_enqueue_scripts', 'enqueue_custom_product_assets' );
 
-// -------------------------------------------------------------
-// ACF RADIO CARDS AUTO-GENERATOR
-// -------------------------------------------------------------
 if( function_exists('acf_add_local_field_group') ):
     acf_add_local_field_group(array(
         'key' => 'group_custom_pack_options',
@@ -376,13 +401,12 @@ if( function_exists('acf_add_local_field_group') ):
     ));
 endif;
     
-// -------------------------------------------------------------
-// DYNAMIC CART PRICE OVERRIDE
-// -------------------------------------------------------------
-
-// 1. Store custom selected option data in Cart Item
 add_filter( 'woocommerce_add_cart_item_data', 'add_custom_pack_size_data', 10, 3 );
 function add_custom_pack_size_data( $cart_item_data, $product_id, $variation_id ) {
+    
+    $use_custom = get_post_meta($product_id, '_use_custom_template', true);
+    if ($use_custom !== 'yes') return $cart_item_data;
+
     if ( isset( $_POST['custom_pack_size_index'] ) && $_POST['custom_pack_size_index'] !== '' ) {
         $index = intval( $_POST['custom_pack_size_index'] );
         $repeater = get_field('pack_sizes', $product_id);
@@ -418,5 +442,13 @@ function calculate_custom_pack_price( $cart ) {
         if ( isset( $cart_item['custom_pack_price'] ) ) {
             $cart_item['data']->set_price( $cart_item['custom_pack_price'] );
         }
+    }
+}
+
+// 4. Save custom pack title to Order Item Meta (so it shows in backend orders and emails)
+add_action( 'woocommerce_checkout_create_order_line_item', 'save_custom_pack_size_to_order_item', 10, 4 );
+function save_custom_pack_size_to_order_item( $item, $cart_item_key, $values, $order ) {
+    if ( isset( $values['custom_pack_title'] ) ) {
+        $item->add_meta_data( 'Pack Size', $values['custom_pack_title'] );
     }
 }

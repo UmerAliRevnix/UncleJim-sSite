@@ -20,7 +20,8 @@ while ( have_posts() ) :
 // Get ACF Fields safely
 $subtitle      = function_exists('get_field') ? get_field('product_subtitle') : '';
 $badge_text    = function_exists('get_field') ? get_field('image_badge_text') : '';
-$wholesale     = function_exists('get_field') ? get_field('wholesale_link') : '';
+$wholesale     = get_post_meta(get_the_ID(), '_wholesale_link', true);
+$wholesale_text= get_post_meta(get_the_ID(), '_wholesale_text', true) ?: 'Contact us for wholesale orders';
 $feature_text  = function_exists('get_field') ? get_field('feature_item_text') : ''; 
 $custom_reviews= function_exists('get_field') ? get_field('custom_product_reviews') : ''; 
 $pack_label_image = function_exists('get_field') ? get_field('pack_label_image') : '';
@@ -79,22 +80,35 @@ $pack_label_image = function_exists('get_field') ? get_field('pack_label_image')
         
         <div class="custom-product__price-block">
             <?php 
-            $regular_price = (float) $product->get_regular_price();
-            $sale_price = (float) $product->get_sale_price();
+            $pack_sizes = function_exists('get_field') ? get_field('pack_sizes') : false;
+            $initial_sale_price = '';
+            $initial_reg_price = '';
+            $initial_discount = '';
 
-            if ( $product->is_on_sale() && $regular_price && $sale_price ) : 
-                $percentage = round( ( ( $regular_price - $sale_price ) / $regular_price ) * 100 );
+            if ($pack_sizes && isset($pack_sizes[0])) {
+                $initial_sale_price = floatval(preg_replace('/[^0-9.]/', '', $pack_sizes[0]['price']));
+                $initial_reg_price = floatval(preg_replace('/[^0-9.]/', '', $pack_sizes[0]['old_price']));
+                
+                if ($initial_reg_price > 0 && $initial_sale_price > 0 && $initial_reg_price > $initial_sale_price) {
+                    $initial_discount = '-' . round((($initial_reg_price - $initial_sale_price) / $initial_reg_price) * 100) . '% OFF';
+                }
+            } else {
+                $initial_sale_price = (float)$product->get_price();
+                $initial_reg_price = (float)$product->get_regular_price();
+                if ($product->is_on_sale() && $initial_reg_price > 0 && $initial_sale_price > 0 && $initial_reg_price > $initial_sale_price) {
+                    $initial_discount = '-' . round((($initial_reg_price - $initial_sale_price) / $initial_reg_price) * 100) . '% OFF';
+                }
+            }
             ?>
-                <div>
-                    <span>$<?php echo number_format($sale_price, 2); ?></span>
-                    <span>$<?php echo number_format($regular_price, 2); ?></span>
-                    <span >-<?php echo esc_html($percentage); ?>% OFF</span>
-                </div>
-            <?php else : ?>
-                <div style="display: flex; align-items: center; margin-bottom: 5px;">
-                    <span style="font-size: 28px; font-weight: 800; color: #1e4d30;">$<?php echo number_format((float)$product->get_price(), 2); ?></span>
-                </div>
-            <?php endif; ?>
+            <div id="custom-main-price-container">
+                <span id="custom-main-sale-price"><?php echo $initial_sale_price > 0 ? '$' . number_format($initial_sale_price, 2) : ''; ?></span>
+                <span id="custom-main-reg-price" style="<?php echo ($initial_reg_price > 0 && $initial_reg_price > $initial_sale_price) ? '' : 'display:none;'; ?>">
+                    <?php echo $initial_reg_price > 0 ? '$' . number_format($initial_reg_price, 2) : ''; ?>
+                </span>
+                <span id="custom-main-discount" style="<?php echo $initial_discount ? '' : 'display:none;'; ?>">
+                    <?php echo esc_html($initial_discount); ?>
+                </span>
+            </div>
         </div>
 
         <?php
@@ -163,7 +177,19 @@ $pack_label_image = function_exists('get_field') ? get_field('pack_label_image')
                     </div>
                     <div class="custom-pack-cards-container">
                         <?php foreach($pack_sizes as $index => $pack): ?>
-                            <label class="custom-pack-card <?php echo $index === 0 ? 'custom-pack-card--selected' : ''; ?>">
+                            <?php
+                            $clean_price = floatval(preg_replace('/[^0-9.]/', '', $pack['price']));
+                            $clean_old = floatval(preg_replace('/[^0-9.]/', '', $pack['old_price']));
+                            
+                            $dynamic_discount = '';
+                            if ($clean_old > 0 && $clean_price > 0 && $clean_old > $clean_price) {
+                                $dynamic_discount = '-' . round((($clean_old - $clean_price) / $clean_old) * 100) . '%';
+                            }
+                            ?>
+                            <label class="custom-pack-card <?php echo $index === 0 ? 'custom-pack-card--selected' : ''; ?>" 
+                                   data-price="<?php echo esc_attr($clean_price); ?>" 
+                                   data-old-price="<?php echo esc_attr($clean_old); ?>" 
+                                   data-discount="<?php echo esc_attr($dynamic_discount ? $dynamic_discount . ' OFF' : ''); ?>">
                                 <input type="radio" name="custom_pack_size_index" value="<?php echo esc_attr($index); ?>" style="display:none;" <?php checked($index, 0); ?>>
                                 
                                 <div class="custom-pack-card__left">
@@ -175,15 +201,6 @@ $pack_label_image = function_exists('get_field') ? get_field('pack_label_image')
                                         <?php endif; ?>
                                     </div>
                                 </div>
-                                <?php
-                                $clean_price = floatval(preg_replace('/[^0-9.]/', '', $pack['price']));
-                                $clean_old = floatval(preg_replace('/[^0-9.]/', '', $pack['old_price']));
-                                
-                                $dynamic_discount = '';
-                                if ($clean_old > 0 && $clean_price > 0 && $clean_old > $clean_price) {
-                                    $dynamic_discount = '-' . round((($clean_old - $clean_price) / $clean_old) * 100) . '%';
-                                }
-                                ?>
                                 <div class="custom-pack-card__badges">
                                     <?php if($pack['badge']): ?>
                                         <span class="custom-pack-card__badge"><?php echo esc_html($pack['badge']); ?></span>
@@ -209,7 +226,7 @@ $pack_label_image = function_exists('get_field') ? get_field('pack_label_image')
                 
                 <?php if($wholesale): ?>
                     <a href="<?php echo esc_url($wholesale); ?>" class="custom-product__wholesale-link" >
-                        Contact us for wholesale orders
+                        <?php echo esc_html($wholesale_text); ?>
                     </a>
                 <?php endif; ?>
 
@@ -248,5 +265,3 @@ $pack_label_image = function_exists('get_field') ? get_field('pack_label_image')
 <?php endwhile; // end of the loop. ?>
 
 <?php get_footer( 'shop' ); ?>
-
-

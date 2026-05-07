@@ -24,10 +24,44 @@
                     input.checked = true;
                 }
 
+                // Update the "Pack Size: XXX" label
                 var titleEl = this.querySelector('.custom-pack-card__title');
                 var labelEl = document.getElementById('dynamic-pack-label');
                 if (titleEl && labelEl) {
                     labelEl.innerText = titleEl.innerText;
+                }
+
+                // Update the Main Price Display
+                var price = this.dataset.price;
+                var oldPrice = this.dataset.oldPrice;
+                var discount = this.dataset.discount;
+
+                var mainSalePriceEl = document.getElementById('custom-main-sale-price');
+                var mainRegPriceEl = document.getElementById('custom-main-reg-price');
+                var mainDiscountEl = document.getElementById('custom-main-discount');
+
+                if (mainSalePriceEl && price) {
+                    mainSalePriceEl.innerText = '$' + parseFloat(price).toFixed(2);
+                }
+
+                if (mainRegPriceEl) {
+                    if (oldPrice && parseFloat(oldPrice) > parseFloat(price)) {
+                        mainRegPriceEl.innerText = '$' + parseFloat(oldPrice).toFixed(2);
+                        mainRegPriceEl.style.display = 'inline';
+                    } else {
+                        mainRegPriceEl.innerText = '';
+                        mainRegPriceEl.style.display = 'none';
+                    }
+                }
+
+                if (mainDiscountEl) {
+                    if (discount) {
+                        mainDiscountEl.innerText = discount;
+                        mainDiscountEl.style.display = 'inline-block';
+                    } else {
+                        mainDiscountEl.innerText = '';
+                        mainDiscountEl.style.display = 'none';
+                    }
                 }
             });
         });
@@ -392,4 +426,3 @@
         initMobileThumbSync(document);
     });
 })();
-
